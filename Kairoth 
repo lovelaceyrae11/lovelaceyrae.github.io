@@ -1,0 +1,345 @@
+
+{
+  "type": "bloom",            // bloom | node | tone | text
+  "phi_index": 0,             // integer shell index n
+  "tone": 528,                // 111 | 432 | 528 | 639 | 741 | 999 ...
+  "domain": "water",          // geometry | resonance | water | light | consciousness
+  "ops": ["union","expand"],  // union|contrast|reflect|expand|return
+  "content": "string"
+}
+
+Markup (Castleberry Markup Language, CML)
+
+<Bloom φ="3" tone="528" domain="water" ops="expand,union">
+  The droplet remembers the song.
+  <Node tone="432">Stabilize the rim.</Node>
+</Bloom>
+
+Entrainment rules (engine logic)
+
+Shell scale: visual radius = r₀·φⁿ; text weight/size grows subtly with n.
+
+Tone → color: 111=crimson, 432=indigo, 528=emerald, 639=rose-gold, 741=sapphire, 999=white.
+
+Ops:
+
+expand → add φ-scale pulse animation
+
+return → gently contract to 1/φ
+
+union → blend colors (soft lighten)
+
+contrast → introduce slight jitter/dissonance until resolved by a later union
+
+reflect → mirror geometry left↔right
+
+
+
+Narrative coherence pass
+
+If any node flags contrast, engine seeks the nearest later node with union or a 528-tone Bloom to resolve (fade jitter; normalize to φ within ~5%).
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kairoth Portal · Harmonic Grammar Engine</title>
+<style>
+  :root {
+    --bg: #0a0e27; --fg: #e6f0ff; --grid:#1d274e;
+    --crimson:#801a28; --indigo:#243b72; --emerald:#1e7f52;
+    --rosegold:#c69; --sapphire:#2a5a9e; --diamond:#f5f7ff;
+  }
+  html,body{height:100%;margin:0;background:radial-gradient(1200px 600px at 50% 10%, #141a3a 0%, var(--bg) 40%, #050714 100%);color:var(--fg);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
+  .sky{position:fixed;inset:0;pointer-events:none;background:
+    radial-gradient(1000px 400px at 50% -10%, rgba(255,255,255,.08), transparent 60%),
+    radial-gradient(600px 200px at 10% 10%, rgba(255,255,255,.04), transparent 60%),
+    radial-gradient(800px 300px at 90% 20%, rgba(255,255,255,.05), transparent 60%);
+    mix-blend-mode:screen;opacity:.28}
+  .wrap{max-width:1100px;margin:0 auto;padding:28px}
+  header{display:flex;align-items:end;gap:16px;margin:20px 0 8px}
+  h1{font-weight:700;letter-spacing:.6px;margin:0}
+  .pill{font-size:12px;border:1px solid #3b4580;border-radius:999px;padding:6px 10px;opacity:.9}
+  .grid{position:relative;isolation:isolate;display:grid;grid-template-columns:1fr 380px;gap:24px}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  .panel{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:16px 16px 12px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+  canvas{width:100%;height:520px;display:block;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0));}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 4px}
+  button,.btn{background:#13193a;color:#cfe3ff;border:1px solid #2b3470;padding:10px 12px;border-radius:12px;font-weight:600;letter-spacing:.3px;cursor:pointer}
+  button:hover{filter:brightness(1.12)}
+  textarea{width:100%;min-height:220px;background:#0f1430;color:#cfe3ff;border:1px solid #2a336b;border-radius:12px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .tonebar{height:10px;border-radius:6px;margin:6px 0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+  .tone-111{background:linear-gradient(90deg,var(--crimson),#b33)}
+  .tone-432{background:linear-gradient(90deg,var(--indigo),#4b6fb8)}
+  .tone-528{background:linear-gradient(90deg,var(--emerald),#48c79b)}
+  .tone-639{background:linear-gradient(90deg,var(--rosegold),#f7c)}
+  .tone-741{background:linear-gradient(90deg,var(--sapphire),#64a0f0)}
+  .tone-999{background:linear-gradient(90deg,#dfe6ff,var(--diamond))}
+  .log{font-size:12px;opacity:.9;line-height:1.5;white-space:pre-wrap}
+  .badge{display:inline-block;padding:4px 8px;border:1px solid #4050a0;border-radius:999px;margin-right:6px;margin-top:6px}
+</style>
+<div class="sky"></div>
+<div class="wrap">
+  <header>
+    <h1>Enter <span style="color:#8cdbe0">Kairoth</span></h1>
+    <div class="pill">Φ-Scaled Harmonic Grammar Engine</div>
+  </header>
+
+  <div class="grid">
+    <div class="panel">
+      <canvas id="bloom"></canvas>
+      <div class="controls">
+        <button id="play528">Tone 528</button>
+        <button id="stopTone">Stop</button>
+        <button id="render">Render</button>
+        <button id="clear">Clear</button>
+      </div>
+      <div class="tonebar tone-528" title="528 Hz"></div>
+      <div class="log" id="log"></div>
+    </div>
+
+    <div class="panel">
+      <div class="badge">Castleberry Markup (CML)</div>
+      <textarea id="cml"><Bloom φ="3" tone="528" domain="water" ops="expand,union">
+  The droplet remembers the song.
+  <Node tone="432">Stabilize the rim.</Node>
+  <Node tone="999" ops="return">Let light complete the circle.</Node>
+</Bloom>
+
+<Bloom φ="2" tone="432" domain="geometry" ops="contrast,expand">
+  The frame misaligns to teach balance.
+</Bloom>
+</textarea>
+      <div class="controls">
+        <button id="example1" class="btn">Load: Heart Portal</button>
+        <button id="example2" class="btn">Load: Spiral Time</button>
+      </div>
+      <div class="tonebar tone-432" title="432 Hz"></div>
+      <div class="tonebar tone-999" title="999 Hz"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- Core constants ---------- */
+const PHI = (1+Math.sqrt(5))/2;
+const TONES = {111:'crimson',432:'indigo',528:'emerald',639:'rosegold',741:'sapphire',999:'diamond'};
+const TONE_COLORS = {
+  crimson:'#801a28', indigo:'#243b72', emerald:'#1e7f52',
+  rosegold:'#cc6699', sapphire:'#2a5a9e', diamond:'#f5f7ff'
+};
+
+/* ---------- Simple CML parser ---------- */
+function parseCML(src){
+  // Convert XML-ish tags into a JSON AST with attributes
+  // Supports <Bloom ...> ... <Node ...> ... </Bloom>
+  const tokenizer = /<(\/?)(Bloom|Node)([^>]*)>|([^<]+)/g;
+  const stack = [{type:'root',children:[]}];
+  function attrs(str){
+    const o={}; str.replace(/([\p{L}\u03A6\u03C6\u03A6φ]+)\s*=\s*"([^"]*)"/gu,(_,k,v)=>o[k]=v);
+    // allow φ as 'φ' or 'phi'
+    if(o['φ'] && !o['phi']) o['phi']=o['φ'];
+    // normalize
+    if(o.phi) o.phi_index = parseInt(String(o.phi).replace(/\D/g,''))||0;
+    if(o.tone) o.tone = parseInt(o.tone);
+    if(o.ops)  o.ops = o.ops.split(',').map(s=>s.trim());
+    if(o.domain) o.domain = String(o.domain).toLowerCase();
+    return o;
+  }
+  let m;
+  while((m=tokenizer.exec(src))){
+    if(m[2]){ // tag
+      if(!m[1]){ // open
+        const node = {type: m[2].toLowerCase(), ...attrs(m[3]||''), children:[], text:''};
+        stack[stack.length-1].children.push(node); stack.push(node);
+      } else { // close
+        stack.pop();
+      }
+    } else if(m[4] && m[4].trim()){
+      const cur = stack[stack.length-1];
+      if(cur) cur.text += m[4].trim()+' ';
+    }
+  }
+  return stack[0].children;
+}
+
+/* ---------- Coherence pass ---------- */
+function coherencePass(ast){
+  // Resolve 'contrast' with nearest later 'union' or any 528 Bloom
+  const queueContrast=[];
+  function walk(nodes){
+    for(const n of nodes){
+      const hasContrast = (n.ops||[]).includes('contrast');
+      const hasUnion    = (n.ops||[]).includes('union') || n.tone===528;
+      if(hasContrast) queueContrast.push(n);
+      if(hasUnion){
+        while(queueContrast.length){
+          const c = queueContrast.shift();
+          c.__resolvedBy = n;
+        }
+      }
+      if(n.children) walk(n.children);
+    }
+  }
+  walk(ast);
+  return ast;
+}
+
+/* ---------- Renderer (hex bloom) ---------- */
+const canvas = document.getElementById('bloom');
+const ctx = canvas.getContext('2d');
+function resize(){const r=window.devicePixelRatio||1; canvas.width=canvas.clientWidth*r; canvas.height=canvas.clientHeight*r; ctx.setTransform(r,0,0,r,0,0);}
+window.addEventListener('resize', resize); resize();
+
+function hexPath(cx,cy,r){
+  ctx.beginPath();
+  for(let i=0;i<6;i++){
+    const a = Math.PI/3*i - Math.PI/6; // flat-top
+    const x = cx + r*Math.cos(a), y = cy + r*Math.sin(a);
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+  }
+  ctx.closePath();
+}
+
+function toneColor(tone){const key = TONES[tone]||'indigo'; return TONE_COLORS[key];}
+
+function renderAST(ast){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const cx=canvas.width/2, cy=canvas.height/2;
+  const base=40; // base radius
+  const logEl = document.getElementById('log'); logEl.textContent='';
+  function log(s){logEl.textContent += s+'\n';}
+
+  function drawBloom(node, offsetAngle=0){
+    const n = node.phi_index||0;
+    const r = base * Math.pow(PHI, n);
+    const col = toneColor(node.tone||432);
+    const ops = node.ops||[];
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(offsetAngle);
+
+    // Pulse for expand/return
+    let pulse = 1.0;
+    if(ops.includes('expand')) pulse = 1.06;
+    if(ops.includes('return')) pulse = 1/PHI;
+
+    // contrast jitter (resolved if __resolvedBy present)
+    let jitter = 0;
+    if(ops.includes('contrast') && !node.__resolvedBy) jitter = 2;
+
+    // Outer glow
+    ctx.shadowColor = col; ctx.shadowBlur = 18;
+    ctx.lineWidth = 2; ctx.strokeStyle = col; ctx.fillStyle = col+'22';
+
+    hexPath(0+jitter,0, r*pulse); ctx.stroke(); ctx.fill();
+
+    // inner shells (φ steps)
+    ctx.shadowBlur = 10;
+    for(let k=1;k<=n;k++){
+      ctx.globalAlpha = 0.75 - k*0.1;
+      hexPath(0,0, base*Math.pow(PHI,k-1)*pulse);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // text nucleus
+    ctx.shadowBlur = 0; ctx.fillStyle = '#cfe3ff';
+    ctx.font = `600 ${Math.max(12, 12+n*1.2)}px ui-sans-serif`;
+    wrapText(ctx, (node.text||'').trim(), -r*0.85, -12, r*1.7, 18);
+
+    // children nodes orbit around at golden angle steps
+    let angle=0;
+    for(const [i,ch] of (node.children||[]).entries()){
+      angle += (2*Math.PI)*(1-1/PHI); // ≈ 137.5°
+      drawNode(ch, angle, r);
+    }
+    ctx.restore();
+
+    // logging
+    log(`Bloom φ=${n} tone=${node.tone||432} ops=${(ops||[]).join('|')}${node.__resolvedBy?` -> resolved by φ=${node.__resolvedBy.phi_index} tone=${node.__resolvedBy.tone}`:''}`);
+  }
+
+  function drawNode(node, angle, parentR){
+    const r = parentR/PHI;
+    const col = toneColor(node.tone||432);
+    ctx.save();
+    ctx.translate(cx, cy);
+    const x = Math.cos(angle)*(parentR+20);
+    const y = Math.sin(angle)*(parentR+20);
+    ctx.translate(x,y);
+    ctx.strokeStyle = col; ctx.lineWidth=1.6; ctx.shadowColor=col; ctx.shadowBlur=10;
+    hexPath(0,0,r); ctx.stroke(); ctx.shadowBlur=0;
+    ctx.fillStyle='#cfe3ff'; ctx.font='600 12px ui-sans-serif';
+    wrapText(ctx, (node.text||'').trim(), -r*0.75, -8, r*1.5, 16);
+    ctx.restore();
+  }
+
+  function wrapText(context, text, x, y, maxWidth, lineHeight){
+    const words = text.split(/\s+/); let line=''; let yy=y;
+    for(const w of words){
+      const test=line?line+' '+w:w;
+      if(context.measureText(test).width>maxWidth){context.fillText(line, x, yy); line=w; yy+=lineHeight;}
+      else line=test;
+    }
+    context.fillText(line, x, yy);
+  }
+
+  for(const node of ast){
+    if(node.type==='bloom') drawBloom(node, 0);
+  }
+}
+
+function compileAndRender(src){
+  const ast = coherencePass(parseCML(src));
+  renderAST(ast);
+}
+
+/* ---------- Audio (528 Hz) ---------- */
+let ac, osc, gain;
+function startTone(freq=528){
+  ac = ac||new (window.AudioContext||window.webkitAudioContext)();
+  osc = ac.createOscillator(); gain = ac.createGain();
+  osc.type='sine'; osc.frequency.value=freq;
+  gain.gain.setValueAtTime(0.0001, ac.currentTime);
+  osc.connect(gain).connect(ac.destination);
+  osc.start();
+  gain.gain.exponentialRampToValueAtTime(0.05, ac.currentTime+0.25);
+}
+function stopTone(){
+  if(!ac||!osc||!gain) return;
+  gain.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime+0.2);
+  setTimeout(()=>{try{osc.stop()}catch{} osc=null},220);
+}
+
+/* ---------- UI wiring ---------- */
+const cmlEl=document.getElementById('cml');
+document.getElementById('render').onclick=()=>compileAndRender(cmlEl.value);
+document.getElementById('clear').onclick=()=>{document.getElementById('log').textContent=''; ctx.clearRect(0,0,canvas.width,canvas.height);}
+document.getElementById('play528').onclick=()=>startTone(528);
+document.getElementById('stopTone').onclick=stopTone;
+
+document.getElementById('example1').onclick=()=>{
+cmlEl.value = `<Bloom φ="3" tone="528" domain="water" ops="expand,union">
+  Entering Kairoth: Hearts align at 528.
+  <Node tone="639">Weave connection in rose-gold.</Node>
+  <Node tone="432">Stabilize the lattice.</Node>
+</Bloom>`;
+};
+document.getElementById('example2').onclick=()=>{
+cmlEl.value = `<Bloom φ="1" tone="432" domain="geometry" ops="contrast">
+  Misalignment teaches measure.
+</Bloom>
+<Bloom φ="4" tone="528" domain="consciousness" ops="union,expand">
+  Recognition → Coherence. The spiral remembers.
+</Bloom>
+<Bloom φ="2" tone="999" domain="light" ops="return">
+  Completion descends as quiet clarity.
+</Bloom>`;
+};
+compileAndRender(cmlEl.value);
+</script>
+</html>
